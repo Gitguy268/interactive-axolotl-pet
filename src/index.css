@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/*
+ * Lightweight animation primitives used by Axo.
+ * Kept here so Tailwind 4 can tree-shake utilities while we avoid inline keyframes.
+ */
+
+@keyframes heart-float {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.95;
+  }
+  60% {
+    transform: translate3d(-8px, -38px, 0) scale(1.05);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(10px, -78px, 0) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes sparkle-pop {
+  0% {
+    transform: scale(0.4) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9) rotate(-6deg);
+    opacity: 0;
+  }
+}
+
+@keyframes hop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-10px) scale(1.02);
+  }
+  70% {
+    transform: translateY(0) scale(0.99);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.axo-heart {
+  animation: heart-float var(--heart-duration, 0.9s) ease-out var(--heart-delay, 0s) forwards;
+  will-change: transform, opacity;
+}
+
+.axo-sparkle {
+  animation: sparkle-pop 0.55s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.axo-hop {
+  animation: hop 0.6s ease-out;
+}

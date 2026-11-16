@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Interactive Pink Axolotl Pet</title>
+    <style>
+      /* =========================
+         Layout (demo-only)
+         ========================= */
+      :root {
+        --page-bg: radial-gradient(1200px 800px at 50% 15%, #fff 0%, #fff7fb 40%, #f7fbff 100%);
+        --size: clamp(250px, 42vmin, 340px);
+
+        /* Axolotl palette */
+        --outline: #7a3a55;
+        --skin-top: #ffe1ee;
+        --skin-mid: #ffb9d6;
+        --skin-bot: #ff9bc7;
+        --skin-shadow: #ff7fb8;
+        --gill: #ff70b3;
+        --gill-2: #ff4aa0;
+        --blush: #ff73ad;
+
+        --eye-white: #fffafc;
+        --iris: #3a2630;
+        --pupil: #1e1419;
+        --shine: rgba(255, 255, 255, 0.95);
+
+        --heart: #ff4fa8;
+        --heart-2: #ff8cc9;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        display: grid;
+        place-items: center;
+        background: var(--page-bg);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+      }
+
+      /* =========================
+         Axolotl container
+         ========================= */
+      .pet {
+        width: var(--size);
+        aspect-ratio: 1;
+        position: relative;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        cursor: pointer;
+
+        /* Live-updated by JS (defaults = neutral) */
+        --head-x: 0px;
+        --head-y: 0px;
+        --head-r: 0deg;
+        --pupil-x: 0px;
+        --pupil-y: 0px;
+      }
+
+      .pet svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        overflow: visible;
+      }
+
+      .fx-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: visible;
+      }
+
+      /* =========================
+         SVG / Axolotl design
+         ========================= */
+      #axo {
+        transform-origin: center;
+      }
+
+      #axo .outline {
+        stroke: var(--outline);
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+      }
+
+      #axo .skin {
+        fill: url(#skinGrad);
+      }
+
+      #axo .skinShadow {
+        fill: var(--skin-shadow);
+        opacity: 0.28;
+      }
+
+      #axo .gill {
+        fill: url(#gillGrad);
+      }
+
+      #axo .gillDetail {
+        fill: none;
+        stroke: rgba(122, 58, 85, 0.22);
+        stroke-width: 3;
+        stroke-linecap: round;
+        vector-effect: non-scaling-stroke;
+      }
+
+      #axo .blush {
+        fill: var(--blush);
+        opacity: 0.5;
+      }
+
+      #axo .eyeWhite {
+        fill: var(--eye-white);
+      }
+      #axo .iris {
+        fill: var(--iris);
+      }
+      #axo .pupilDot {
+        fill: var(--pupil);
+      }
+      #axo .shine {
+        fill: var(--shine);
+      }
+
+      /* Only the head + eyes track the cursor */
+      #headTrack {
+        transform: translate(var(--head-x), var(--head-y)) rotate(var(--head-r));
+        transform-box: fill-box;
+        transform-origin: 50% 78%;
+      }
+
+      .eye {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+
+      .eyeBlink {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+
+      .eye .pupil {
+        transform: translate(var(--pupil-x), var(--pupil-y));
+      }
+
+      .mouth {
+        fill: none;
+        stroke: var(--outline);
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .mouth--smile {
+        opacity: 0;
+      }
+
+      /* =========================
+         Click reactions (loop-safe)
+         ========================= */
+      .pet.is-happy #headJoy {
+        animation: headJoy 520ms cubic-bezier(0.2, 0.9, 0.2, 1) 1;
+      }
+
+      .pet.is-happy .eyeBlink {
+        animation: blink 220ms ease-in-out 1;
+      }
+
+      .pet.is-happy .mouth--neutral {
+        opacity: 0;
+      }
+      .pet.is-happy .mouth--smile {
+        opacity: 1;
+      }
+
+      @keyframes headJoy {
+        0% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        22% {
+          transform: translate(0, -2px) rotate(-2deg);
+        }
+        52% {
+          transform: translate(0, 1px) rotate(2deg);
+        }
+        100% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          transform: scaleY(1);
+        }
+        45% {
+          transform: scaleY(0.08);
+        }
+      }
+
+      /* =========================
+         Floating hearts
+         ========================= */
+      .heart {
+        position: absolute;
+        left: 50%;
+        top: 45%;
+        width: 18px;
+        height: 18px;
+        transform: translate(-50%, -50%);
+        filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.08));
+        animation: heartFloat 900ms ease-out forwards;
+        will-change: transform, opacity;
+      }
+
+      .heart::before {
+        content: "❤";
+        position: absolute;
+        inset: 0;
+        font-size: 18px;
+        line-height: 18px;
+        text-align: center;
+        color: var(--heart);
+        text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+      }
+
+      .heart.alt::before {
+        color: var(--heart-2);
+      }
+
+      @keyframes heartFloat {
+        0% {
+          opacity: 0;
+          transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.85);
+        }
+        12% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 56px)) scale(1.15);
+        }
+      }
+
+      /* Reduced motion: keep it calm */
+      @media (prefers-reduced-motion: reduce) {
+        .pet {
+          --head-x: 0px;
+          --head-y: 0px;
+          --head-r: 0deg;
+          --pupil-x: 0px;
+          --pupil-y: 0px;
+        }
+        .pet.is-happy #headJoy,
+        .pet.is-happy .eyeBlink,
+        .heart {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pet" id="pet" aria-label="Interactive axolotl mascot" role="img">
+      <!-- =========================
+           SVG / Axolotl design (no background)
+           Main group id MUST be: axo
+           ========================= -->
+      <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="skinGrad" x1="0" y1="80" x2="0" y2="280" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="var(--skin-top)" />
+            <stop offset="0.55" stop-color="var(--skin-mid)" />
+            <stop offset="1" stop-color="var(--skin-bot)" />
+          </linearGradient>
+          <linearGradient id="gillGrad" x1="0" y1="80" x2="0" y2="200" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="var(--gill)" />
+            <stop offset="1" stop-color="var(--gill-2)" />
+          </linearGradient>
+        </defs>
+
+        <g id="axo">
+          <!-- Body never moves (static) -->
+          <g id="body">
+            <!-- Tail (behind) -->
+            <path
+              class="outline skin"
+              d="M214 194
+               C260 176 296 202 288 234
+               C282 260 250 278 220 260
+               C236 252 244 236 236 222
+               C230 210 222 202 214 194Z"
+            />
+            <path
+              class="skinShadow"
+              d="M226 220
+               C248 212 270 224 264 244
+               C258 262 238 268 222 258
+               C236 252 244 236 236 222Z"
+            />
+
+            <!-- Torso -->
+            <path
+              class="outline skin"
+              d="M86 220
+               C72 184 86 150 122 136
+               C144 128 168 128 190 136
+               C226 150 244 184 236 224
+               C228 262 202 286 160 286
+               C118 286 94 260 86 220Z"
+            />
+            <path
+              class="skinShadow"
+              d="M110 236
+               C118 262 134 274 160 274
+               C186 274 204 262 214 234
+               C204 248 186 256 160 256
+               C134 256 118 248 110 236Z"
+            />
+
+            <!-- Little feet -->
+            <path
+              class="outline skin"
+              d="M118 270
+               C112 280 118 294 134 296
+               C150 298 156 286 148 274Z"
+            />
+            <path
+              class="outline skin"
+              d="M172 274
+               C164 286 170 298 186 296
+               C202 294 208 280 202 270Z"
+            />
+          </g>
+
+          <!-- Head tracks cursor (slight) -->
+          <g id="headTrack">
+            <g id="headJoy">
+              <!-- Gills -->
+              <g id="gills" aria-hidden="true">
+                <!-- Left -->
+                <g transform="translate(102 138)">
+                  <g transform="rotate(-18) scale(0.98)">
+                    <path class="outline gill" d="M0 0 C-18 -18 -24 -48 0 -64 C24 -48 18 -18 0 0Z" />
+                    <path class="gillDetail" d="M0 -8 C-8 -20 -10 -36 -6 -52" />
+                    <path class="gillDetail" d="M0 -8 C8 -20 10 -36 6 -52" />
+                  </g>
+                  <g transform="translate(-12 18) rotate(-48) scale(0.86)">
+                    <path class="outline gill" d="M0 0 C-18 -18 -24 -48 0 -64 C24 -48 18 -18 0 0Z" />
+                    <path class="gillDetail" d="M0 -8 C-8 -20 -10 -36 -6 -52" />
+                    <path class="gillDetail" d="M0 -8 C8 -20 10 -36 6 -52" />
+                  </g>
+                  <g transform="translate(-3 34) rotate(-74) scale(0.78)">
+                    <path class="outline gill" d="M0 0 C-18 -18 -24 -48 0 -64 C24 -48 18 -18 0 0Z" />
+                    <path class="gillDetail" d="M0 -8 C-8 -20 -10 -36 -6 -52" />
+                    <path class="gillDetail" d="M0 -8 C8 -20 10 -36 6 -52" />
+                  </g>
+                </g>
+
+                <!-- Right (mirrored) -->
+                <g transform="translate(218 138) scale(-1 1)">
+                  <g transform="rotate(-18) scale(0.98)">
+                    <path class="outline gill" d="M0 0 C-18 -18 -24 -48 0 -64 C24 -48 18 -18 0 0Z" />
+                    <path class="gillDetail" d="M0 -8 C-8 -20 -10 -36 -6 -52" />
+                    <path class="gillDetail" d="M0 -8 C8 -20 10 -36 6 -52" />
+                  </g>
+                  <g transform="translate(-12 18) rotate(-48) scale(0.86)">
+                    <path class="outline gill" d="M0 0 C-18 -18 -24 -48 0 -64 C24 -48 18 -18 0 0Z" />
+                    <path class="gillDetail" d="M0 -8 C-8 -20 -10 -36 -6 -52" />
+                    <path class="gillDetail" d="M0 -8 C8 -20 10 -36 6 -52" />
+                  </g>
+                  <g transform="translate(-3 34) rotate(-74) scale(0.78)">
+                    <path class="outline gill" d="M0 0 C-18 -18 -24 -48 0 -64 C24 -48 18 -18 0 0Z" />
+                    <path class="gillDetail" d="M0 -8 C-8 -20 -10 -36 -6 -52" />
+                    <path class="gillDetail" d="M0 -8 C8 -20 10 -36 6 -52" />
+                  </g>
+                </g>
+              </g>
+
+              <!-- Head base -->
+              <path
+                class="outline skin"
+                d="M98 150
+                 C92 116 120 90 160 90
+                 C200 90 228 116 222 150
+                 C216 186 192 212 160 214
+                 C128 212 104 186 98 150Z"
+              />
+              <path
+                class="skinShadow"
+                d="M114 166
+                 C126 194 142 206 160 208
+                 C178 206 194 194 206 166
+                 C194 184 178 194 160 196
+                 C142 194 126 184 114 166Z"
+              />
+
+              <!-- Cheeks -->
+              <circle class="blush" cx="122" cy="172" r="13" />
+              <circle class="blush" cx="198" cy="172" r="13" />
+
+              <!-- Eyes -->
+              <g class="eye" transform="translate(128 144)">
+                <g class="eyeBlink">
+                  <ellipse class="outline eyeWhite" cx="0" cy="0" rx="18" ry="22" />
+                  <g class="pupil">
+                    <ellipse class="iris" cx="0" cy="2" rx="10" ry="12" />
+                    <circle class="pupilDot" cx="0" cy="6" r="5.2" />
+                    <circle class="shine" cx="-4" cy="-5" r="3.2" />
+                    <circle class="shine" cx="4.2" cy="-0.8" r="1.8" />
+                  </g>
+                </g>
+              </g>
+
+              <g class="eye" transform="translate(192 144)">
+                <g class="eyeBlink">
+                  <ellipse class="outline eyeWhite" cx="0" cy="0" rx="18" ry="22" />
+                  <g class="pupil">
+                    <ellipse class="iris" cx="0" cy="2" rx="10" ry="12" />
+                    <circle class="pupilDot" cx="0" cy="6" r="5.2" />
+                    <circle class="shine" cx="-4" cy="-5" r="3.2" />
+                    <circle class="shine" cx="4.2" cy="-0.8" r="1.8" />
+                  </g>
+                </g>
+              </g>
+
+              <!-- Mouth (neutral + smile toggled on click) -->
+              <path class="mouth mouth--neutral" d="M152 182 C156 186 164 186 168 182" />
+              <path class="mouth mouth--smile" d="M146 180 C152 192 168 192 174 180" />
+            </g>
+          </g>
+        </g>
+      </svg>
+
+      <div class="fx-layer" id="fx" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      /* =========================
+         Interaction logic
+         - cursor tracking (head + pupils)
+         - click reactions (bounce + blink + hearts)
+         ========================= */
+      (function () {
+        const pet = document.getElementById("pet");
+        const svg = pet.querySelector("svg");
+        const fx = document.getElementById("fx");
+
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+        const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+        const lerp = (a, b, t) => a + (b - a) * t;
+
+        // SVG/viewBox coordinates for the head's "focus" point (roughly between the eyes).
+        const VIEW = 320;
+        const HEAD_FOCUS = { x: 160, y: 145 };
+
+        // Subtle maximum offsets in screen pixels.
+        const MAX_HEAD = 8;
+        const MAX_PUPIL = 5;
+        const MAX_ROT = 5; // degrees
+
+        const state = {
+          target: { hx: 0, hy: 0, hr: 0, px: 0, py: 0 },
+          current: { hx: 0, hy: 0, hr: 0, px: 0, py: 0 },
+          hasPointer: false,
+          lastPointer: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+          raf: 0,
+        };
+
+        function headFocusInViewport() {
+          const rect = svg.getBoundingClientRect();
+          const scale = rect.width / VIEW;
+          return {
+            x: rect.left + HEAD_FOCUS.x * scale,
+            y: rect.top + HEAD_FOCUS.y * scale,
+          };
+        }
+
+        function setTargetsFromPointer(clientX, clientY) {
+          state.hasPointer = true;
+          state.lastPointer.x = clientX;
+          state.lastPointer.y = clientY;
+
+          const focus = headFocusInViewport();
+          const dx = clientX - focus.x;
+          const dy = clientY - focus.y;
+
+          const radius = Math.max(140, Math.min(window.innerWidth, window.innerHeight) * 0.28);
+          const nx = clamp(dx / radius, -1, 1);
+          const ny = clamp(dy / radius, -1, 1);
+
+          state.target.hx = nx * MAX_HEAD;
+          state.target.hy = ny * MAX_HEAD;
+          state.target.hr = nx * MAX_ROT;
+
+          state.target.px = nx * MAX_PUPIL;
+          state.target.py = ny * MAX_PUPIL;
+        }
+
+        function resetTargets() {
+          state.hasPointer = false;
+          state.target.hx = 0;
+          state.target.hy = 0;
+          state.target.hr = 0;
+          state.target.px = 0;
+          state.target.py = 0;
+        }
+
+        function tick() {
+          // Smooth follow (slightly faster for pupils than head).
+          const headEase = 0.11;
+          const pupilEase = 0.16;
+
+          state.current.hx = lerp(state.current.hx, state.target.hx, headEase);
+          state.current.hy = lerp(state.current.hy, state.target.hy, headEase);
+          state.current.hr = lerp(state.current.hr, state.target.hr, headEase);
+
+          state.current.px = lerp(state.current.px, state.target.px, pupilEase);
+          state.current.py = lerp(state.current.py, state.target.py, pupilEase);
+
+          pet.style.setProperty("--head-x", `${state.current.hx.toFixed(2)}px`);
+          pet.style.setProperty("--head-y", `${state.current.hy.toFixed(2)}px`);
+          pet.style.setProperty("--head-r", `${state.current.hr.toFixed(2)}deg`);
+          pet.style.setProperty("--pupil-x", `${state.current.px.toFixed(2)}px`);
+          pet.style.setProperty("--pupil-y", `${state.current.py.toFixed(2)}px`);
+
+          state.raf = requestAnimationFrame(tick);
+        }
+
+        function spawnHearts() {
+          const rect = pet.getBoundingClientRect();
+          const count = 1 + Math.floor(Math.random() * 3);
+
+          // Anchor near the head (slightly above center).
+          const baseX = rect.width * 0.56;
+          const baseY = rect.height * 0.26;
+
+          for (let i = 0; i < count; i++) {
+            const el = document.createElement("span");
+            el.className = "heart" + (Math.random() > 0.55 ? " alt" : "");
+            const x = (Math.random() - 0.5) * 34;
+            const y = (Math.random() - 0.5) * 18;
+            el.style.left = `${baseX + x}px`;
+            el.style.top = `${baseY + y}px`;
+            el.style.setProperty("--x", `${(Math.random() - 0.5) * 12}px`);
+            el.style.setProperty("--y", `${(Math.random() - 0.5) * 10}px`);
+            el.addEventListener("animationend", () => el.remove(), { once: true });
+            fx.appendChild(el);
+          }
+        }
+
+        function triggerHappy() {
+          if (prefersReducedMotion.matches) return;
+
+          pet.classList.remove("is-happy");
+          // Force restart of CSS animations (loop-safe)
+          void pet.offsetWidth;
+          pet.classList.add("is-happy");
+
+          spawnHearts();
+
+          window.clearTimeout(triggerHappy._t);
+          triggerHappy._t = window.setTimeout(() => pet.classList.remove("is-happy"), 650);
+        }
+
+        // Track pointer across the window.
+        window.addEventListener(
+          "pointermove",
+          (e) => {
+            if (prefersReducedMotion.matches) return;
+            setTargetsFromPointer(e.clientX, e.clientY);
+          },
+          { passive: true }
+        );
+
+        // When pointer leaves the page/window, return gently to neutral.
+        document.addEventListener("mouseleave", resetTargets, { passive: true });
+        window.addEventListener("blur", resetTargets, { passive: true });
+
+        // Click only when the SVG itself is clicked (not the page).
+        svg.addEventListener("pointerdown", (e) => {
+          const onAxo = e.target instanceof Element && e.target.closest("#axo");
+          if (!onAxo) return;
+          triggerHappy();
+        });
+
+        // Start animation loop.
+        state.raf = requestAnimationFrame(tick);
+
+        // Ensure we reset if reduced-motion preference changes.
+        prefersReducedMotion.addEventListener?.("change", () => {
+          resetTargets();
+        });
+      })();
+    </script>
+  </body>
+</html>

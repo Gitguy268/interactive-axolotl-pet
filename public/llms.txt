@@ -1,0 +1,7 @@
+# Interactive Axolotl Pet
+
+> Axo, a pink axolotl pet made with React, TypeScript and Tailwind CSS. It blinks, follows the pointer with its head and eyes, and hops with hearts and sparkles when clicked.
+
+- Live page: https://gitguy268.github.io/interactive-axolotl-pet/
+- Source: https://github.com/Gitguy268/interactive-axolotl-pet
+- License: MIT

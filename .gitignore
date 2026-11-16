@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.vercel/
+.codex/
+axo-pet.zip
+.DS_Store
+._*

@@ -1,0 +1,12 @@
+Interactive Axolotl Pet
+Copyright (c) 2026 Lucas Van De Weerd
+Licensed under the MIT License (see LICENSE).
+
+Third-party packages (installed by npm, bundled into dist/index.html where marked):
+- React and React DOM (MIT), bundled
+- clsx (MIT), bundled
+- tailwind-merge (MIT), bundled
+- Tailwind CSS (MIT), generated styles bundled
+- Vite, @vitejs/plugin-react, @tailwindcss/vite, vite-plugin-singlefile, TypeScript (MIT or Apache-2.0), build tools only
+
+No images, fonts or icons from other owners are used. The axolotl is drawn with CSS.
